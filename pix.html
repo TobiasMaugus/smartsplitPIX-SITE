@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pagamento Pix</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f4f4f5;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 90%;
+      width: 320px;
+    }
+    h2 { margin-top: 0; color: #111827; }
+    p { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
+    button {
+      background-color: #10B981; /* Verde Pix */
+      color: white;
+      border: none;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.2s;
+    }
+    button:active { background-color: #059669; }
+    #success {
+      display: none;
+      color: #10B981;
+      font-weight: bold;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Pagar via Pix</h2>
+    <p>Clique no botão abaixo para copiar o código Copia e Cola.</p>
+    
+    <button id="copyBtn">📋 Copiar Código Pix</button>
+    <div id="success">✅ Código copiado com sucesso! Abra o app do seu banco.</div>
+  </div>
+
+  <script>
+    // Lê o código Pix que veio na URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const pixCode = urlParams.get('codigo');
+
+    const btn = document.getElementById('copyBtn');
+    const successText = document.getElementById('success');
+
+    btn.addEventListener('click', async () => {
+      if (!pixCode) {
+        alert("Código Pix não encontrado no link.");
+        return;
+      }
+
+      try {
+        // API nativa dos navegadores para copiar para a área de transferência
+        await navigator.clipboard.writeText(pixCode);
+        
+        // Muda o visual do botão para dar feedback
+        btn.style.display = 'none';
+        successText.style.display = 'block';
+        
+        // Tenta fechar a janela após 3 segundos (funciona em alguns navegadores in-app)
+        setTimeout(() => { window.close(); }, 3000);
+      } catch (err) {
+        // Fallback caso o navegador bloqueie o clipboard automático
+        prompt("Seu celular bloqueou a cópia automática. Copie o código abaixo:", pixCode);
+      }
+    });
+  </script>
+
+</body>
+</html>

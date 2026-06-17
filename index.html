@@ -38,12 +38,14 @@
       min-height: 100vh;
       padding: 20px;
       box-sizing: border-box;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     /* Container Principal */
     .card {
       background: var(--card-bg);
-      padding: 30px 24px;
+      /* 🔥 Adicionado mais espaço no topo (50px) para o botão caber sem esmagar o logo */
+      padding: 50px 24px 30px; 
       border-radius: 24px;
       width: 100%;
       max-width: 360px; /* Padrão Mobile */
@@ -54,11 +56,10 @@
       position: relative;
     }
 
-    /* 🔥 Media Query para Desktop (PC) */
     @media (min-width: 768px) {
       .card {
         max-width: 450px; /* Fica maior em PC */
-        padding: 40px;
+        padding: 50px 40px 40px;
       }
     }
 
@@ -77,30 +78,35 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
-    /* 🔥 Distância reduzida do logo para o teto e para o qrcode */
     .logo-container {
-      margin-bottom: 12px; /* Reduzi bastante */
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     #appLogo {
-      width: 300px; /* Reduzi o tamanho original para caber melhor */
-      height: auto;
+      width: 100%;
+      max-width: 160px; /* 🔥 Limita a largura para não bater no botão */
+      max-height: 80px; /* Limita a altura para não empurrar os textos muito pra baixo */
       object-fit: contain;
     }
 
-    h2 { margin: 0 0 8px 0; font-size: 22px; }
-    .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; }
+    h2 { margin: 0 0 8px 0; font-size: 22px; text-align: center; }
+    .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; text-align: center; }
     
-    .amount-display { font-size: 32px; font-weight: 700; margin-bottom: 20px; }
+    .amount-display { font-size: 32px; font-weight: 700; margin-bottom: 16px; }
 
     .qrcode-box {
-      background: #FFFFFF;
+      background: #FFFFFF; /* Fundo branco obrigatório pro código ler */
       padding: 12px;
       border-radius: 16px;
-      margin-bottom: 20px; /* Distância menor */
-      display: none;
+      margin-bottom: 20px; 
+      display: none; /* Só aparece quando o JS renderiza o QR */
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
     }
 
     .copy-btn {
@@ -113,9 +119,31 @@
       border-radius: 12px;
       width: 100%;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
 
-    #success { display: none; color: #10B981; margin-top: 12px; font-weight: 600; }
+    #success { 
+      display: none; 
+      color: #10B981; 
+      margin-top: 12px; 
+      font-weight: 600; 
+      text-align: center;
+      background-color: rgba(16, 185, 129, 0.15);
+      padding: 10px;
+      border-radius: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .error-msg {
+      color: #EF4444;
+      font-size: 14px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -136,15 +164,18 @@
       <div id="qrcode"></div>
     </div>
 
-    <button id="copyBtn" class="copy-btn">Copiar Código Pix</button>
-    <div id="success">✅ Código copiado!</div>
+    <button id="copyBtn" class="copy-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      Copiar Código Pix
+    </button>
+    <div id="success">✅ Código copiado! Abra o app do seu banco.</div>
   </div>
 
   <script>
-    // [MANTER O RESTANTE DO SEU SCRIPT AQUI]
-    // A lógica de aplicar tema e extrair valor permanece a mesma
+    // --- 1. Lógica do Tema ---
     const themeToggleBtn = document.getElementById('themeToggle');
     const appLogo = document.getElementById('appLogo');
+    
     const sunIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
     const moonIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
 
@@ -162,7 +193,64 @@
       apply(theme);
     });
 
-    // ... (restante da lógica do Pix)
+    // --- 2. Lógica do PIX e QR Code ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const pixCode = urlParams.get('codigo');
+    
+    const amountDisplay = document.getElementById('amountDisplay');
+    const qrcodeBox = document.getElementById('qrcodeBox');
+    const qrcodeElement = document.getElementById('qrcode');
+    const copyBtn = document.getElementById('copyBtn');
+    const successText = document.getElementById('success');
+
+    function extractPixAmount(emvString) {
+      let i = 0;
+      while (i < emvString.length) {
+        const id = emvString.substr(i, 2);
+        const lenStr = emvString.substr(i + 2, 2);
+        const len = parseInt(lenStr, 10);
+        if (isNaN(len)) break;
+        const value = emvString.substr(i + 4, len);
+        if (id === '54') return parseFloat(value); // ID 54 é o valor no Banco Central
+        i += 4 + len;
+      }
+      return null;
+    }
+
+    if (!pixCode) {
+      amountDisplay.innerHTML = '<div class="error-msg">Código Pix não encontrado no link. Gere o link novamente pelo aplicativo.</div>';
+      copyBtn.style.display = 'none';
+    } else {
+      // Puxa o valor da string
+      const amount = extractPixAmount(pixCode);
+      if (amount) {
+        amountDisplay.innerText = `R$ ${amount.toFixed(2).replace('.', ',')}`;
+      }
+
+      // Renderiza o QR Code
+      qrcodeBox.style.display = 'block';
+      new QRCode(qrcodeElement, {
+        text: pixCode,
+        width: 180,
+        height: 180,
+        colorDark : "#000000",
+        colorLight : "#FFFFFF",
+        correctLevel : QRCode.CorrectLevel.M
+      });
+    }
+
+    // --- 3. Lógica de Copiar ---
+    copyBtn.addEventListener('click', async () => {
+      if (!pixCode) return;
+      try {
+        await navigator.clipboard.writeText(pixCode);
+        copyBtn.style.display = 'none';
+        successText.style.display = 'block';
+      } catch (err) {
+        // Fallback para celulares que bloqueiam cópia automática
+        prompt("Copie o código abaixo:", pixCode);
+      }
+    });
   </script>
 </body>
 </html>

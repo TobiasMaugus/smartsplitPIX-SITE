@@ -1,89 +1,287 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pagamento Pix</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  
   <style>
+    /* 🔥 Variáveis de Tema (Light e Dark) */
+    :root {
+      /* Tema Claro (Padrão inicial) */
+      --bg-color: #F4F4F5;
+      --card-bg: #FFFFFF;
+      --text-primary: #111827;
+      --text-secondary: #6B7280;
+      --icon-bg: #F3F4F6;
+      --shadow: rgba(0, 0, 0, 0.1);
+      --btn-toggle-bg: #E5E7EB;
+      --btn-toggle-icon: #4B5563;
+    }
+
+    [data-theme="dark"] {
+      /* Tema Escuro */
+      --bg-color: #000000;
+      --card-bg: #18181B;
+      --text-primary: #FFFFFF;
+      --text-secondary: #A1A1AA;
+      --icon-bg: #27272A;
+      --shadow: rgba(0, 0, 0, 0.5);
+      --btn-toggle-bg: #27272A;
+      --btn-toggle-icon: #A1A1AA;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      margin: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f4f4f5;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
-      max-width: 90%;
-      width: 320px;
-    }
-    h2 { margin-top: 0; color: #111827; }
-    p { color: #6b7280; margin-bottom: 24px; font-size: 14px; }
-    button {
-      background-color: #10B981; /* Verde Pix */
-      color: white;
+
+    /* Botão Flutuante de Tema */
+    .theme-toggle {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background-color: var(--btn-toggle-bg);
+      color: var(--btn-toggle-icon);
       border: none;
-      padding: 16px 24px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 8px;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      width: 100%;
-      transition: background-color 0.2s;
+      transition: background-color 0.3s ease, transform 0.1s;
+      z-index: 10;
     }
-    button:active { background-color: #059669; }
+
+    .theme-toggle:active {
+      transform: scale(0.9);
+    }
+
+    /* Container Principal */
+    .card {
+      background: var(--card-bg);
+      padding: 40px 24px;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 8px 32px var(--shadow);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+    }
+
+    .logo-container {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Imagem do Logo que será trocada via JS */
+    #appLogo {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+    }
+
+    h2 {
+      margin: 0 0 8px 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+      text-align: center;
+      margin: 0 0 24px 0;
+    }
+
+    .amount-display {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: var(--text-primary);
+    }
+
+    .qrcode-box {
+      background: #FFFFFF; /* QR Code DEVE ser branco sempre para ler */
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      display: none;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+    }
+
+    .copy-btn {
+      background-color: #10B981;
+      color: #FFFFFF;
+      border: none;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      width: 100%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .copy-btn:active {
+      background-color: #059669;
+    }
+
     #success {
       display: none;
+      background-color: rgba(16, 185, 129, 0.15);
       color: #10B981;
-      font-weight: bold;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
       margin-top: 16px;
+      width: 100%;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    .error-msg {
+      color: #EF4444;
+      text-align: center;
+      font-weight: 500;
     }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>Pagar via Pix</h2>
-    <p>Clique no botão abaixo para copiar o código Copia e Cola.</p>
+  <button id="themeToggle" class="theme-toggle" aria-label="Alternar Tema">
+    </button>
+
+  <div class="card" id="mainCard">
     
-    <button id="copyBtn">📋 Copiar Código Pix</button>
-    <div id="success">✅ Código copiado com sucesso! Abra o app do seu banco.</div>
+    <div class="logo-container">
+      <img id="appLogo" src="group1l.svg" alt="Logo do Aplicativo">
+    </div>
+
+    <h2>Pagamento via Pix</h2>
+    <p class="subtitle" id="instructionText">Escaneie o QR Code ou copie a chave</p>
+
+    <div class="amount-display" id="amountDisplay"></div>
+
+    <div class="qrcode-box" id="qrcodeBox">
+      <div id="qrcode"></div>
+    </div>
+
+    <button id="copyBtn" class="copy-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+      Copiar Código Pix
+    </button>
+    <div id="success">✅ Código copiado! Abra o app do seu banco.</div>
   </div>
 
   <script>
-    // Lê o código Pix que veio na URL
+    // --- LÓGICA DE TEMAS E SVGS --- //
+    const themeToggleBtn = document.getElementById('themeToggle');
+    const appLogo = document.getElementById('appLogo');
+    
+    // Ícones para o botão do canto da tela
+    const sunIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+    const moonIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+
+    // Detecta a preferência do Sistema Operacional
+    const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    let currentTheme = prefersDarkScheme.matches ? "dark" : "light";
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      if (theme === "dark") {
+        appLogo.src = "group1d.svg"; // Logo para modo escuro
+        themeToggleBtn.innerHTML = sunIcon;
+      } else {
+        appLogo.src = "group1l.svg"; // Logo para modo claro
+        themeToggleBtn.innerHTML = moonIcon;
+      }
+    }
+
+    // Aplica o tema inicial
+    applyTheme(currentTheme);
+
+    // Evento de clique para trocar o tema
+    themeToggleBtn.addEventListener("click", () => {
+      currentTheme = currentTheme === "light" ? "dark" : "light";
+      applyTheme(currentTheme);
+    });
+
+    // --- LÓGICA DO PIX --- //
     const urlParams = new URLSearchParams(window.location.search);
     const pixCode = urlParams.get('codigo');
-
-    const btn = document.getElementById('copyBtn');
+    
+    const amountDisplay = document.getElementById('amountDisplay');
+    const qrcodeBox = document.getElementById('qrcodeBox');
+    const qrcodeElement = document.getElementById('qrcode');
+    const copyBtn = document.getElementById('copyBtn');
     const successText = document.getElementById('success');
 
-    btn.addEventListener('click', async () => {
-      if (!pixCode) {
-        alert("Código Pix não encontrado no link.");
-        return;
+    function extractPixAmount(emvString) {
+      let i = 0;
+      while (i < emvString.length) {
+        const id = emvString.substr(i, 2);
+        const lenStr = emvString.substr(i + 2, 2);
+        const len = parseInt(lenStr, 10);
+        if (isNaN(len)) break;
+        const value = emvString.substr(i + 4, len);
+        if (id === '54') return parseFloat(value);
+        i += 4 + len;
+      }
+      return null;
+    }
+
+    if (!pixCode) {
+      document.getElementById('mainCard').innerHTML = '<p class="error-msg">Código Pix não encontrado na URL.</p>';
+      themeToggleBtn.style.display = 'none';
+    } else {
+      const amount = extractPixAmount(pixCode);
+      if (amount) {
+        amountDisplay.innerText = `R$ ${amount.toFixed(2).replace('.', ',')}`;
       }
 
+      qrcodeBox.style.display = 'block';
+      new QRCode(qrcodeElement, {
+        text: pixCode,
+        width: 180,
+        height: 180,
+        colorDark : "#000000",
+        colorLight : "#FFFFFF",
+        correctLevel : QRCode.CorrectLevel.M
+      });
+    }
+
+    copyBtn.addEventListener('click', async () => {
+      if (!pixCode) return;
       try {
-        // API nativa dos navegadores para copiar para a área de transferência
         await navigator.clipboard.writeText(pixCode);
-        
-        // Muda o visual do botão para dar feedback
-        btn.style.display = 'none';
+        copyBtn.style.display = 'none';
         successText.style.display = 'block';
-        
-        // Tenta fechar a janela após 3 segundos (funciona em alguns navegadores in-app)
-        setTimeout(() => { window.close(); }, 3000);
       } catch (err) {
-        // Fallback caso o navegador bloqueie o clipboard automático
-        prompt("Seu celular bloqueou a cópia automática. Copie o código abaixo:", pixCode);
+        prompt("Copie o código abaixo:", pixCode);
       }
     });
   </script>

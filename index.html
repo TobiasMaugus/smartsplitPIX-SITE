@@ -35,8 +35,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
+      /* 🔥 100dvh resolve o problema de scroll fantasma no mobile */
+      min-height: 100dvh; 
+      padding: 16px;
       box-sizing: border-box;
       transition: background-color 0.3s ease, color 0.3s ease;
     }
@@ -44,11 +45,11 @@
     /* Container Principal */
     .card {
       background: var(--card-bg);
-      /* 🔥 Adicionado mais espaço no topo (50px) para o botão caber sem esmagar o logo */
-      padding: 50px 24px 30px; 
+      /* Ajuste nos espaçamentos internos para otimizar espaço vertical */
+      padding: 36px 20px 24px; 
       border-radius: 24px;
       width: 100%;
-      max-width: 360px; /* Padrão Mobile */
+      max-width: 380px; 
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -58,54 +59,59 @@
 
     @media (min-width: 768px) {
       .card {
-        max-width: 450px; /* Fica maior em PC */
-        padding: 50px 40px 40px;
+        max-width: 450px;
+        padding: 40px;
       }
     }
 
     /* Botão de Tema dentro da Div */
     .theme-toggle {
       position: absolute;
-      top: 16px;
-      right: 16px;
+      top: 14px;
+      right: 14px;
       background-color: var(--btn-toggle-bg);
       color: var(--btn-toggle-icon);
       border: none;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: background-color 0.3s;
+      z-index: 2;
     }
 
     .logo-container {
-      margin-bottom: 12px;
+      margin-top: 12px; /* Empurra a logo um pouco pra baixo do botão */
+      margin-bottom: 8px; /* Menos espaço abaixo para caber na tela */
       display: flex;
       justify-content: center;
       align-items: center;
+      width: 100%;
     }
 
     #appLogo {
-      width: 100%;
-      max-width: 160px; /* 🔥 Limita a largura para não bater no botão */
-      max-height: 80px; /* Limita a altura para não empurrar os textos muito pra baixo */
+      /* 🔥 Logo com 300px cravados */
+      width: 300px;
+      max-width: 100%; /* Proteção para celulares extremamente estreitos */
+      height: auto;
+      max-height: 90px; /* Protege a altura para não empurrar os textos e gerar scroll */
       object-fit: contain;
     }
 
-    h2 { margin: 0 0 8px 0; font-size: 22px; text-align: center; }
-    .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; text-align: center; }
+    h2 { margin: 0 0 4px 0; font-size: 20px; text-align: center; }
+    .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 12px; text-align: center; }
     
-    .amount-display { font-size: 32px; font-weight: 700; margin-bottom: 16px; }
+    .amount-display { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
 
     .qrcode-box {
-      background: #FFFFFF; /* Fundo branco obrigatório pro código ler */
-      padding: 12px;
+      background: #FFFFFF; 
+      padding: 10px;
       border-radius: 16px;
-      margin-bottom: 20px; 
-      display: none; /* Só aparece quando o JS renderiza o QR */
+      margin-bottom: 16px; 
+      display: none; 
       box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
     }
 
@@ -141,7 +147,7 @@
     .error-msg {
       color: #EF4444;
       font-size: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       text-align: center;
     }
   </style>
@@ -211,7 +217,7 @@
         const len = parseInt(lenStr, 10);
         if (isNaN(len)) break;
         const value = emvString.substr(i + 4, len);
-        if (id === '54') return parseFloat(value); // ID 54 é o valor no Banco Central
+        if (id === '54') return parseFloat(value); 
         i += 4 + len;
       }
       return null;
@@ -221,18 +227,17 @@
       amountDisplay.innerHTML = '<div class="error-msg">Código Pix não encontrado no link. Gere o link novamente pelo aplicativo.</div>';
       copyBtn.style.display = 'none';
     } else {
-      // Puxa o valor da string
       const amount = extractPixAmount(pixCode);
       if (amount) {
         amountDisplay.innerText = `R$ ${amount.toFixed(2).replace('.', ',')}`;
       }
 
-      // Renderiza o QR Code
       qrcodeBox.style.display = 'block';
+      // Geração do QR Code
       new QRCode(qrcodeElement, {
         text: pixCode,
-        width: 180,
-        height: 180,
+        width: 170, // Levemente reduzido para garantir que caiba verticalmente
+        height: 170,
         colorDark : "#000000",
         colorLight : "#FFFFFF",
         correctLevel : QRCode.CorrectLevel.M
@@ -247,7 +252,6 @@
         copyBtn.style.display = 'none';
         successText.style.display = 'block';
       } catch (err) {
-        // Fallback para celulares que bloqueiam cópia automática
         prompt("Copie o código abaixo:", pixCode);
       }
     });
